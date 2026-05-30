@@ -62,6 +62,9 @@
   .app.nav-collapsed { grid-template-columns:var(--nav-w-collapsed) 1fr var(--right-w); }
   .app.right-hidden  { grid-template-columns:var(--nav-w) 1fr 0; }
   .app.nav-collapsed.right-hidden { grid-template-columns:var(--nav-w-collapsed) 1fr 0; }
+  /* 二级/三级页自动隐藏右侧任务面板 */
+  .app.right-auto-hidden { grid-template-columns:var(--nav-w) 1fr 0; }
+  .app.nav-collapsed.right-auto-hidden { grid-template-columns:var(--nav-w-collapsed) 1fr 0; }
 
   /* ============================ 左侧导航 */
   .nav { background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
@@ -183,6 +186,28 @@
   .empty { text-align:center; padding:48px 0; color:var(--text-mute); }
   .empty .glyph { font-size:38px; opacity:.5; }
   .empty p { margin-top:10px; font-size:var(--fs-md); }
+
+  /* 项目详情：目录树 + 笔记 */
+  .detail-head { display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+  .detail-back { display:flex; align-items:center; gap:5px; font-size:var(--fs-md); font-weight:600; color:var(--text-soft); padding:7px 12px; border:1px solid var(--border); border-radius:var(--r-sm); transition:.15s; }
+  .detail-back:hover { color:var(--text); border-color:var(--brand-300); }
+  .detail-title { display:flex; align-items:center; gap:12px; }
+  .detail-title .d-ico { width:42px; height:42px; border-radius:12px; display:grid; place-items:center; font-size:20px; flex:none; }
+  .detail-title h1 { font-size:var(--fs-xl); font-weight:700; letter-spacing:-.01em; }
+  .detail-title .d-meta { font-size:var(--fs-xs); color:var(--text-mute); }
+  .detail-body { display:grid; grid-template-columns:248px 1fr; gap:22px; align-items:start; }
+  .tree { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:8px; }
+  .tree-row { display:flex; align-items:center; gap:6px; padding:7px 8px; border-radius:var(--r-sm); font-size:var(--fs-md); color:var(--text-soft); cursor:pointer; transition:.12s; user-select:none; }
+  .tree-row:hover { background:var(--surface-2); color:var(--text); }
+  .tree-row.active { background:var(--brand-50); color:var(--brand-600); font-weight:600; }
+  .tree-row .caret { width:15px; text-align:center; font-size:9px; color:var(--text-mute); flex:none; transition:transform .15s; }
+  .tree-row .caret.open { transform:rotate(90deg); }
+  .tree-row .caret.blank { visibility:hidden; }
+  .tree-row .tname { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tree-row .tcnt { font-size:var(--fs-xs); color:var(--text-mute); background:var(--surface-2); border-radius:99px; padding:0 7px; min-width:18px; text-align:center; }
+  .tree-row.active .tcnt { background:var(--brand-100); color:var(--brand-600); }
+  .detail-notes-head { display:flex; align-items:baseline; gap:10px; margin-bottom:14px; }
+  .detail-notes-head h2 { font-size:var(--fs-lg); font-weight:650; }
 
   /* ============================ 右侧栏：任务 / 告警（多应用来源） */
   .right { background:var(--surface); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
@@ -312,6 +337,26 @@
         <div class="projs" id="proj-all"></div>
       </section>
 
+      <!-- ══ 项目详情（三级页：目录树 + 该项目笔记） ══ -->
+      <section class="page" id="page-detail">
+        <div class="detail-head">
+          <button class="detail-back" onclick="go('projects')"><svg class="icon" style="width:15px;height:15px" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg>项目管理</button>
+          <div class="detail-title">
+            <div class="d-ico" id="d-ico"></div>
+            <div><h1 id="d-name"></h1><span class="d-meta" id="d-meta"></span></div>
+          </div>
+          <button class="btn-primary" style="margin-left:auto"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:16px;height:16px"><path d="M12 5v14M5 12h14"/></svg>新建笔记</button>
+        </div>
+        <div class="detail-body">
+          <aside class="tree" id="detail-tree"></aside>
+          <div class="detail-notes">
+            <div class="detail-notes-head"><h2 id="detail-dir-title">全部笔记</h2><span class="count" id="detail-dir-count"></span></div>
+            <div class="docs grid" id="detail-docs"></div>
+            <div class="empty" id="detail-empty" style="display:none"><div class="glyph">📭</div><p>该目录下暂无笔记</p></div>
+          </div>
+        </div>
+      </section>
+
       <!-- ══ 发现（二级页，统一“推荐”） ══ -->
       <section class="page" id="page-discover">
         <div class="page-head"><h1>发现</h1><p>你还没打开过、但可能想看的内容 · 按主题浏览</p></div>
@@ -351,20 +396,30 @@ const PROJECTS = [
   {id:'p5', name:'品牌升级', emoji:'✨', col:'#d2655f', desc:'品牌视觉与设计系统', notes:4, dirs:['提案','视觉稿'], members:['周'], updated:'4 天前', pct:30},
 ];
 const PMAP = Object.fromEntries(PROJECTS.map(p=>[p.id,p]));
+// path = 笔记在项目里的目录路径(支持多级子目录)
 const DOCS = [
-  {id:'d1', t:'手搭产品基座 · 设计规范 V2',d:'统一组件库、栅格与色彩 token,沉淀可复用的设计基座。',project:'p1',dir:'设计稿',  who:'陈一鸣',c:'陈',type:'笔记',m:8, mine:true, edited:'2 小时前', ts:100, acc:100, ci:4},
-  {id:'d4', t:'首页 Redesign 走查记录',d:'高保真稿评审问题清单与处理状态跟踪。',          project:'p1',dir:'走查记录',who:'陈一鸣',c:'陈',type:'文档',m:5, mine:true, edited:'昨天 19:40', ts:90, acc:96, ci:0},
-  {id:'d3', t:'2026 Q2 产品路线图',d:'季度目标拆解、关键里程碑与跨团队依赖梳理。',        project:'p2',dir:'路线图',  who:'李航',c:'李',type:'看板',m:24,mine:false,edited:'今天 10:30', ts:0, acc:99, ci:1},
-  {id:'d2', t:'API 接口文档 · 订单域',d:'订单中心对外接口定义、字段说明与示例。',          project:'p4',dir:'规范',    who:'吴昊',c:'吴',type:'文档',m:3, mine:false,edited:'今天 09:12', ts:0, acc:98, ci:5},
-  {id:'d5', t:'前端工程化最佳实践',d:'构建、规范、CI/CD 与性能优化的团队约定。',          project:'p4',dir:'规范',    who:'赵磊',c:'赵',type:'笔记',m:12,mine:false,edited:'2 天前', ts:0, acc:80, ci:5},
-  {id:'d8', t:'组件库使用手册',d:'常用组件 API、用法示例与设计走查清单。',                project:'p4',dir:'组件库',  who:'陈一鸣',c:'陈',type:'笔记',m:2, mine:true, edited:'5 天前', ts:55, acc:55, ci:0},
-  {id:'d6', t:'用户访谈纪要 · 4 月批次',d:'12 位目标用户深访结论,核心痛点与机会点汇总。',  project:'p6',dir:'访谈纪要',who:'陈一鸣',c:'陈',type:'文档',m:6, mine:true, edited:'3 天前', ts:70, acc:70, ci:1},
-  {id:'d9', t:'增长实验复盘 #127',d:'本期 A/B 实验设计、数据表现与下一步策略。',          project:'p3',dir:'复盘',    who:'孙婷',c:'孙',type:'文档',m:4, mine:false,edited:'昨天', ts:0, acc:78, ci:2},
-  {id:'d7', t:'品牌视觉升级提案',d:'新 Logo、主色与插画系统的方向探索与对比。',          project:'p5',dir:'提案',    who:'周琳',c:'周',type:'看板',m:9, mine:false,edited:'4 天前', ts:0, acc:60, ci:4},
-  {id:'d10',t:'稿件库 1000 篇精选',d:'高质量内容沉淀,按主题分类的可复用素材。',          project:'p3',dir:'素材',    who:'郑爽',c:'郑',type:'笔记',m:0, mine:false,edited:'上周', ts:0, acc:0, ci:3},
-  {id:'d11',t:'竞品分析 · 协作工具横评',d:'主流协作/知识工具的功能、定价与差异化对比。',  project:'p2',dir:'评审',    who:'林夕',c:'林',type:'文档',m:7, mine:false,edited:'2 天前', ts:0, acc:0, ci:1},
-  {id:'d12',t:'OKR 撰写与对齐指南',d:'目标设定方法、示例库与季度对齐流程。',              project:'p2',dir:'OKR',     who:'何川',c:'何',type:'笔记',m:3, mine:false,edited:'3 天前', ts:0, acc:0, ci:2},
+  {id:'d1', t:'手搭产品基座 · 设计规范 V2',d:'统一组件库、栅格与色彩 token,沉淀可复用的设计基座。',project:'p1',path:['设计稿','组件库'],who:'陈一鸣',c:'陈',type:'笔记',m:8, mine:true, edited:'2 小时前', ts:100, acc:100, ci:4},
+  {id:'d4', t:'首页 Redesign 走查记录',d:'高保真稿评审问题清单与处理状态跟踪。',          project:'p1',path:['走查记录'],      who:'陈一鸣',c:'陈',type:'文档',m:5, mine:true, edited:'昨天 19:40', ts:90, acc:96, ci:0},
+  {id:'d3', t:'2026 Q2 产品路线图',d:'季度目标拆解、关键里程碑与跨团队依赖梳理。',        project:'p2',path:['路线图'],        who:'李航',c:'李',type:'看板',m:24,mine:false,edited:'今天 10:30', ts:0, acc:99, ci:1},
+  {id:'d2', t:'API 接口文档 · 订单域',d:'订单中心对外接口定义、字段说明与示例。',          project:'p4',path:['规范','接口规范'],who:'吴昊',c:'吴',type:'文档',m:3, mine:false,edited:'今天 09:12', ts:0, acc:98, ci:5},
+  {id:'d5', t:'前端工程化最佳实践',d:'构建、规范、CI/CD 与性能优化的团队约定。',          project:'p4',path:['规范','代码规范'],who:'赵磊',c:'赵',type:'笔记',m:12,mine:false,edited:'2 天前', ts:0, acc:80, ci:5},
+  {id:'d8', t:'组件库使用手册',d:'常用组件 API、用法示例与设计走查清单。',                project:'p4',path:['组件库'],        who:'陈一鸣',c:'陈',type:'笔记',m:2, mine:true, edited:'5 天前', ts:55, acc:55, ci:0},
+  {id:'d6', t:'用户访谈纪要 · 4 月批次',d:'12 位目标用户深访结论,核心痛点与机会点汇总。',  project:'p6',path:['访谈纪要','4月'],who:'陈一鸣',c:'陈',type:'文档',m:6, mine:true, edited:'3 天前', ts:70, acc:70, ci:1},
+  {id:'d9', t:'增长实验复盘 #127',d:'本期 A/B 实验设计、数据表现与下一步策略。',          project:'p3',path:['复盘'],          who:'孙婷',c:'孙',type:'文档',m:4, mine:false,edited:'昨天', ts:0, acc:78, ci:2},
+  {id:'d7', t:'品牌视觉升级提案',d:'新 Logo、主色与插画系统的方向探索与对比。',          project:'p5',path:['提案'],          who:'周琳',c:'周',type:'看板',m:9, mine:false,edited:'4 天前', ts:0, acc:60, ci:4},
+  {id:'d10',t:'稿件库 1000 篇精选',d:'高质量内容沉淀,按主题分类的可复用素材。',          project:'p3',path:['素材'],          who:'郑爽',c:'郑',type:'笔记',m:0, mine:false,edited:'上周', ts:0, acc:0, ci:3},
+  {id:'d11',t:'竞品分析 · 协作工具横评',d:'主流协作/知识工具的功能、定价与差异化对比。',  project:'p2',path:['评审'],          who:'林夕',c:'林',type:'文档',m:7, mine:false,edited:'2 天前', ts:0, acc:0, ci:1},
+  {id:'d12',t:'OKR 撰写与对齐指南',d:'目标设定方法、示例库与季度对齐流程。',              project:'p2',path:['OKR'],           who:'何川',c:'何',type:'笔记',m:3, mine:false,edited:'3 天前', ts:0, acc:0, ci:2},
 ];
+// 项目目录树(可含子目录)
+const TREE = {
+  p1:[{n:'设计稿',c:[{n:'组件库'},{n:'页面稿'}]},{n:'走查记录'},{n:'用户调研',c:[{n:'访谈'},{n:'竞品'}]}],
+  p2:[{n:'路线图'},{n:'OKR'},{n:'评审'}],
+  p4:[{n:'规范',c:[{n:'代码规范'},{n:'接口规范'}]},{n:'组件库'},{n:'CI/CD'}],
+  p6:[{n:'访谈纪要',c:[{n:'4月'},{n:'5月'}]},{n:'洞察'}],
+  p3:[{n:'实验设计'},{n:'复盘'},{n:'素材'}],
+  p5:[{n:'提案'},{n:'视觉稿'}],
+};
 
 /* —— 任务/告警：通过 API 开放给各应用 —— 以「来源应用」分类 + 按状态/严重度分组 —— */
 const SOURCES = {
@@ -411,7 +466,7 @@ function docCard(d){
       <button class="pin ${on}" title="置顶常用" onclick="togglePin('${d.id}',event)">📌</button>
     </div>
     <div class="doc-body">
-      <div class="doc-crumb" title="${p.name} / ${d.dir}"><b>${p.emoji} ${p.name}</b> › ${d.dir}</div>
+      <div class="doc-crumb" title="${p.name} / ${d.path.join(' / ')}"><b>${p.emoji} ${p.name}</b> › ${d.path.join(' › ')}</div>
       <div class="doc-title">${d.t}</div>
       <div class="doc-desc">${d.d}</div>
       <div class="doc-meta">
@@ -421,7 +476,7 @@ function docCard(d){
     </div></div>`;
 }
 function projectCard(p){
-  return `<div class="proj" onclick="filterProject('${p.id}')">
+  return `<div class="proj" onclick="openProject('${p.id}')">
     <div class="proj-top">
       <div class="proj-ico" style="background:${p.col}22;color:${p.col}">${p.emoji}</div>
       <div><b>${p.name}</b><small>${p.notes} 篇笔记 · ${p.dirs.length} 个目录</small></div>
@@ -459,6 +514,55 @@ function renderChips(){
 function renderDiscover(){
   document.getElementById('discover').innerHTML = DOCS.filter(d=>!d.mine&&!d.acc).map(docCard).join('');
 }
+
+/* —— 项目详情：可展开目录树 + 该项目笔记 —— */
+let curProj=null, curDir=null, treeOpen=new Set();
+const SEP='::';
+function pathPrefix(docPath, nodePath){ return nodePath.every((s,i)=>docPath[i]===s); }
+function countNotes(proj, nodePath){ return DOCS.filter(d=>d.project===proj && pathPrefix(d.path, nodePath)).length; }
+function openProject(id){
+  curProj=id; curDir=null; treeOpen=new Set();
+  (function walk(nodes,parent){ nodes.forEach(n=>{ const path=[...parent,n.n]; if(n.c){ treeOpen.add(path.join(SEP)); walk(n.c,path); } }); })(TREE[id]||[],[]);
+  go('detail'); renderDetail();
+}
+function renderDetail(){
+  const p=PMAP[curProj], ico=document.getElementById('d-ico');
+  ico.style.background=p.col+'22'; ico.style.color=p.col; ico.textContent=p.emoji;
+  document.getElementById('d-name').textContent=p.name;
+  document.getElementById('d-meta').textContent=`${countNotes(curProj,[])} 篇笔记 · ${p.dirs.length} 个目录 · ${p.members.length} 名成员`;
+  renderTree(); renderDetailNotes();
+}
+function treeRows(nodes, parent, depth){
+  let html='';
+  nodes.forEach(n=>{
+    const path=[...parent,n.n], key=path.join(SEP), hasC=n.c&&n.c.length, open=treeOpen.has(key);
+    const active = curDir && curDir.join(SEP)===key ? 'active':'';
+    html+=`<div class="tree-row ${active}" style="padding-left:${8+depth*15}px" onclick="selectDir('${key}')">
+      <span class="caret ${hasC?(open?'open':''):'blank'}" ${hasC?`onclick="toggleDir('${key}',event)"`:''}>▶</span>
+      <span>${hasC?(open?'📂':'📁'):'📄'}</span>
+      <span class="tname">${n.n}</span>
+      <span class="tcnt">${countNotes(curProj,path)}</span>
+    </div>`;
+    if(hasC&&open) html+=treeRows(n.c, path, depth+1);
+  });
+  return html;
+}
+function renderTree(){
+  const root = !curDir ? 'active':'';
+  let html=`<div class="tree-row ${root}" style="padding-left:8px" onclick="selectDir('')">
+    <span class="caret blank">▶</span><span>🗂️</span><span class="tname">全部笔记</span><span class="tcnt">${countNotes(curProj,[])}</span></div>`;
+  document.getElementById('detail-tree').innerHTML = html + treeRows(TREE[curProj]||[], [], 0);
+}
+function renderDetailNotes(){
+  const list=DOCS.filter(d=>d.project===curProj && (!curDir||pathPrefix(d.path,curDir)));
+  document.getElementById('detail-dir-title').textContent = curDir? curDir.join(' › ') : '全部笔记';
+  document.getElementById('detail-dir-count').textContent = `${list.length} 篇`;
+  const el=document.getElementById('detail-docs'), empty=document.getElementById('detail-empty');
+  if(!list.length){ el.innerHTML=''; empty.style.display='block'; }
+  else { empty.style.display='none'; el.innerHTML=list.map(docCard).join(''); }
+}
+function selectDir(key){ curDir = key ? key.split(SEP) : null; renderTree(); renderDetailNotes(); }
+function toggleDir(key,ev){ ev.stopPropagation(); treeOpen.has(key)?treeOpen.delete(key):treeOpen.add(key); renderTree(); }
 
 /* —— 右侧栏：来源分类 + 分组 —— */
 let curRight='task', curSrc='all';
@@ -523,11 +627,13 @@ function filterProject(id){
 }
 function switchTab(el){ document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); curTab=el.dataset.tab; localStorage.setItem('kw_tab', curTab); apply(); }
 function setView(v){ docsEl.className='docs '+v; document.getElementById('v-grid').classList.toggle('active',v==='grid'); document.getElementById('v-list').classList.toggle('active',v==='list'); }
-function openDoc(id){ const d = DOCS.find(x=>x.id===id); showTip(`正在打开:${PMAP[d.project].name} / ${d.dir} / ${d.t}`); }
+function openDoc(id){ const d = DOCS.find(x=>x.id===id); showTip(`正在打开:${PMAP[d.project].name} / ${d.path.join(' / ')} / ${d.t}`); }
 function go(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
-  document.querySelectorAll('.nav-item[data-page]').forEach(n=>n.classList.toggle('active', n.dataset.page===page));
+  const navKey = page==='detail' ? 'projects' : page;   // 详情页保持「项目」高亮
+  document.querySelectorAll('.nav-item[data-page]').forEach(n=>n.classList.toggle('active', n.dataset.page===navKey));
+  document.getElementById('app').classList.toggle('right-auto-hidden', page!=='home'); // 非首页隐藏任务面板
   document.querySelector('.scroll').scrollTop = 0;
 }
 function notImpl(name){ showTip(`「${name}」为导航占位,Demo 未实现`); }
