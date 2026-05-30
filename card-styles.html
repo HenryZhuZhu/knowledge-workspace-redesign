@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>卡片风格画廊 · 10 种高级方案</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --surface:#ffffff; --surface-2:#f1f3f6; --border:#e6e8ed;
+    --text:#1f2329; --text-soft:#5b626d; --text-mute:#9aa1ac; --link:#3b6cf6;
+    --shadow-xs:0 1px 2px rgba(20,23,28,.05);
+    --shadow-sm:0 1px 3px rgba(20,23,28,.07),0 1px 2px rgba(20,23,28,.04);
+    --shadow-md:0 10px 28px rgba(20,23,28,.12);
+  }
+  body.dark{
+    --bg:#0d0f13; --surface:#16181d; --surface-2:#1d2026; --border:#272b32;
+    --text:#e7e9ed; --text-soft:#9aa1ad; --text-mute:#6b7280; --link:#7d93ff;
+    --shadow-md:0 10px 30px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;line-height:1.5;transition:background .25s,color .25s}
+  ::selection{background:rgba(59,108,246,.18)}
+  .wrap{max-width:1180px;margin:0 auto;padding:40px 32px 80px}
+
+  /* 顶部 */
+  .head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+  .head h1{font-size:27px;font-weight:750;letter-spacing:-.02em}
+  .head p{color:var(--text-soft);font-size:14px;margin-top:7px;max-width:640px}
+  .theme-btn{display:flex;align-items:center;gap:7px;height:38px;padding:0 15px;border:1px solid var(--border);
+    border-radius:10px;background:var(--surface);color:var(--text);font-weight:600;font-size:13px;cursor:pointer;transition:.15s}
+  .theme-btn:hover{border-color:var(--text-mute)}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:18px 0 36px;padding:14px 18px;background:var(--surface);
+    border:1px solid var(--border);border-radius:12px;font-size:12.5px;color:var(--text-soft)}
+  .legend b{color:var(--text)}
+
+  /* 每个风格块 */
+  .style{margin-bottom:46px}
+  .style-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .style-head .num{font-size:12px;font-weight:700;color:#fff;background:var(--text);width:26px;height:26px;
+    border-radius:7px;display:grid;place-items:center;flex:none}
+  .style-head h2{font-size:17px;font-weight:700;letter-spacing:-.01em}
+  .style-head .desc{font-size:13px;color:var(--text-soft)}
+  .style-head .ref{margin-left:auto;font-size:11.5px;font-weight:600;color:var(--text-mute);
+    border:1px solid var(--border);border-radius:99px;padding:3px 11px}
+
+  .grid{display:grid;gap:14px}
+  .grid.cards{grid-template-columns:repeat(auto-fill,minmax(266px,1fr))}
+
+  /* 通用卡片基元 */
+  .card{cursor:pointer;transition:transform .18s,box-shadow .18s,background .18s,border-color .18s}
+  .card h3{font-size:14px;font-weight:650;line-height:1.4;color:var(--text);letter-spacing:-.01em}
+  .card p{font-size:12.5px;color:var(--text-soft);line-height:1.55;margin-top:4px}
+  .clamp1{display:-webkit-box;-webkit-line-clamp:1;line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+  .clamp2{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .ic{width:16px;height:16px;stroke-width:1.7;flex:none}
+  .av{border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:650;width:24px;height:24px;flex:none}
+  .proj{display:inline-flex;align-items:center;gap:6px}
+  .pdot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+  .foot .r{margin-left:auto;display:inline-flex;align-items:center;gap:5px}
+
+  /* 01 Linear —— 极简单色 · 状态点 */
+  .s1 .card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:13px 14px;display:flex;flex-direction:column;gap:7px}
+  .s1 .card:hover{background:var(--surface-2)}
+  .s1 .r1{display:flex;align-items:center;gap:9px}
+  .s1 .pri{width:7px;height:7px;border-radius:50%;flex:none}
+  .s1 h3{font-size:13.5px}
+  .s1 p{margin:0 0 0 16px;color:var(--text-mute)}
+  .s1 .foot{display:flex;align-items:center;gap:8px;margin-left:16px;font-size:11px;color:var(--text-mute)}
+  .s1 .foot .proj{color:var(--text-soft);font-weight:500}
+  .s1 .foot .pdot{width:7px;height:7px;border-radius:2px}
+
+  /* 02 Notion —— 文档图标 · 轻灰中性 */
+  .s2 .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px}
+  .s2 .card:hover{background:var(--surface-2)}
+  .s2 .top{display:flex;gap:11px;align-items:flex-start}
+  .s2 .picon{width:34px;height:34px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);
+    display:grid;place-items:center;color:var(--text-soft);flex:none}
+  .s2 .div{height:1px;background:var(--border);margin:12px 0 10px}
+  .s2 .foot{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-mute)}
+
+  /* 03 Vercel (Geist) —— 黑白高对比 · 等宽元信息 */
+  .s3 .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .s3 .card:hover{border-color:var(--text-mute)}
+  .s3 .card::before{content:"";display:block;height:3px;background:var(--text)}
+  .s3 .inner{padding:15px}
+  .s3 h3{font-size:15px;font-weight:750;letter-spacing:-.02em}
+  .s3 .foot{margin-top:13px;display:flex;gap:9px;align-items:center;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:10.5px;color:var(--text-mute);text-transform:uppercase;letter-spacing:.03em}
+  .s3 .tag{border:1px solid var(--border);border-radius:5px;padding:2px 7px}
+
+  /* 04 Stripe —— 柔和渐变 · 分层阴影 */
+  .s4 .card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;
+    box-shadow:var(--shadow-sm);overflow:hidden}
+  .s4 .card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+  .s4 .card::before{content:"";position:absolute;top:0;left:0;right:0;height:66px;
+    background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 12%,transparent),transparent)}
+  .s4 .top{position:relative;margin-bottom:11px}
+  .s4 .tchip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:650;padding:4px 10px;border-radius:99px}
+  .s4 h3{font-size:14.5px}
+  .s4 .foot{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:11px;color:var(--text-mute)}
+
+  /* 05 Material 3 —— 色彩容器 · 大圆角 */
+  .s5 .card{background:color-mix(in srgb,var(--acc) 9%,var(--surface));border-radius:22px;padding:18px;border:1px solid transparent}
+  .s5 .card:hover{background:color-mix(in srgb,var(--acc) 15%,var(--surface))}
+  .s5 .ico{width:44px;height:44px;border-radius:15px;background:color-mix(in srgb,var(--acc) 22%,var(--surface));
+    color:var(--acc);display:grid;place-items:center;margin-bottom:13px}
+  .s5 h3{font-size:15px}
+  .s5 .chips{display:flex;gap:7px;margin-top:15px;flex-wrap:wrap}
+  .s5 .achip{font-size:11px;font-weight:650;color:var(--acc);background:color-mix(in srgb,var(--acc) 16%,var(--surface));
+    border-radius:9px;padding:5px 11px}
+
+  /* 06 Figma —— 顶部色条 · 协作头像 */
+  .s6 .card{background:var(--surface);border:1px solid var(--border);border-radius:13px;overflow:hidden;box-shadow:var(--shadow-xs)}
+  .s6 .card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+  .s6 .bar{height:5px;background:var(--acc)}
+  .s6 .inner{padding:15px}
+  .s6 .avs{display:flex;margin-top:15px;align-items:center}
+  .s6 .avs .av{margin-left:-7px;border:2px solid var(--surface)}
+  .s6 .avs .av:first-child{margin-left:0}
+  .s6 .avs .r{margin-left:auto;font-size:11px;color:var(--text-mute)}
+
+  /* 07 GitHub —— 列表行 · 功能元数据 */
+  .s7.grid{display:block;border:1px solid var(--border);border-radius:11px;overflow:hidden;background:var(--surface)}
+  .s7 .row{display:flex;gap:13px;padding:15px 17px;border-bottom:1px solid var(--border);align-items:flex-start}
+  .s7 .row:last-child{border-bottom:none}
+  .s7 .row:hover{background:var(--surface-2)}
+  .s7 .rico{color:var(--text-mute);margin-top:1px}
+  .s7 h3{font-size:14px;color:var(--link);font-weight:650}
+  .s7 .meta{display:flex;gap:15px;margin-top:8px;font-size:11px;color:var(--text-mute);align-items:center;flex-wrap:wrap}
+  .s7 .lang{display:flex;align-items:center;gap:6px}
+  .s7 .langdot{width:9px;height:9px;border-radius:50%}
+
+  /* 08 Things 3 —— 柔和留白 · 圆形图标 */
+  .s8 .card{background:var(--surface);border:1px solid var(--border);border-radius:17px;padding:17px;box-shadow:var(--shadow-xs)}
+  .s8 .card:hover{box-shadow:var(--shadow-md)}
+  .s8 .ico{width:38px;height:38px;border-radius:50%;background:color-mix(in srgb,var(--acc) 15%,var(--surface));
+    color:var(--acc);display:grid;place-items:center;margin-bottom:13px}
+  .s8 h3{font-size:14.5px}
+  .s8 .foot{margin-top:14px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-mute)}
+
+  /* 09 Arc —— 玻璃拟态 · 渐变背景 */
+  .s9.grid{padding:20px;border-radius:18px;background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 45%,#0ea5a4 100%)}
+  .s9 .card{background:rgba(255,255,255,.14);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.3);border-radius:16px;padding:16px;color:#fff}
+  .s9 .card:hover{background:rgba(255,255,255,.2)}
+  .s9 h3{color:#fff}
+  .s9 p{color:rgba(255,255,255,.85)}
+  .s9 .pill{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.28);
+    border-radius:99px;padding:3px 11px;font-size:11px;font-weight:650}
+  .s9 .foot{margin-top:13px;display:flex;align-items:center;gap:8px;font-size:11px;color:rgba(255,255,255,.85)}
+
+  /* 10 Ghost / Sanity —— 封面叠标题 · 杂志感 */
+  .s10 .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-xs)}
+  .s10 .card:hover{box-shadow:var(--shadow-md);transform:translateY(-3px)}
+  .s10 .cover{height:108px;position:relative;
+    background:linear-gradient(135deg,var(--acc),color-mix(in srgb,var(--acc) 50%,#15152b))}
+  .s10 .cover .tag{position:absolute;top:12px;left:12px;font-size:10px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;color:#fff;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.32);
+    border-radius:99px;padding:3px 10px;backdrop-filter:blur(4px)}
+  .s10 .inner{padding:15px}
+  .s10 h3{font-size:16px;font-weight:750;letter-spacing:-.02em;line-height:1.3}
+  .s10 .byline{display:flex;align-items:center;gap:7px;margin-top:13px;font-size:11px;color:var(--text-mute)}
+  .s10 .byline .av{width:26px;height:26px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <h1>卡片风格画廊 · 10 种方案</h1>
+      <p>中间内容区文档卡片的 10 种高级视觉风格,均参考主流 SaaS / CMS 平台,统一示例数据、<b>无 emoji</b>(改用线性图标 + 字母头像 + 色点)。挑一个你喜欢的,我把它套用到首页。</p>
+    </div>
+    <button class="theme-btn" onclick="document.body.classList.toggle('dark')">◐ Light / Dark</button>
+  </div>
+  <div class="legend">
+    <span><b>类型</b> 线性图标(文档 / 看板 / 笔记)</span>
+    <span><b>作者</b> 字母头像(取名首字 + 同色淡底)</span>
+    <span><b>项目</b> 色点 + 名称</span>
+    <span><b>无 emoji</b> 全部以图标 / 文字 / 颜色表达</span>
+  </div>
+
+  <div class="style"><div class="style-head"><span class="num">01</span><h2>Linear</h2><span class="desc">极简单色 · 状态点 · 发丝边框</span><span class="ref">参考 Linear</span></div><div class="grid cards s1" id="s1"></div></div>
+  <div class="style"><div class="style-head"><span class="num">02</span><h2>Notion</h2><span class="desc">文档图标 · 轻灰中性 · 克制</span><span class="ref">参考 Notion</span></div><div class="grid cards s2" id="s2"></div></div>
+  <div class="style"><div class="style-head"><span class="num">03</span><h2>Geist</h2><span class="desc">黑白高对比 · 等宽元信息</span><span class="ref">参考 Vercel</span></div><div class="grid cards s3" id="s3"></div></div>
+  <div class="style"><div class="style-head"><span class="num">04</span><h2>Stripe</h2><span class="desc">柔和渐变 · 分层阴影 · 圆润</span><span class="ref">参考 Stripe</span></div><div class="grid cards s4" id="s4"></div></div>
+  <div class="style"><div class="style-head"><span class="num">05</span><h2>Material 3</h2><span class="desc">色彩容器 · 大圆角 · 填充图标</span><span class="ref">参考 Google</span></div><div class="grid cards s5" id="s5"></div></div>
+  <div class="style"><div class="style-head"><span class="num">06</span><h2>Figma</h2><span class="desc">顶部色条 · 协作头像 · 轻快</span><span class="ref">参考 Figma</span></div><div class="grid cards s6" id="s6"></div></div>
+  <div class="style"><div class="style-head"><span class="num">07</span><h2>GitHub</h2><span class="desc">列表行 · 功能性元数据</span><span class="ref">参考 GitHub</span></div><div class="grid s7" id="s7"></div></div>
+  <div class="style"><div class="style-head"><span class="num">08</span><h2>Things</h2><span class="desc">柔和留白 · 圆形图标 · 友好</span><span class="ref">参考 Things 3</span></div><div class="grid cards s8" id="s8"></div></div>
+  <div class="style"><div class="style-head"><span class="num">09</span><h2>Arc</h2><span class="desc">玻璃拟态 · 渐变背景 · 现代</span><span class="ref">参考 Arc</span></div><div class="grid cards s9" id="s9"></div></div>
+  <div class="style"><div class="style-head"><span class="num">10</span><h2>Editorial</h2><span class="desc">封面叠标题 · 杂志感 · 强排版</span><span class="ref">参考 Ghost / Sanity</span></div><div class="grid cards s10" id="s10"></div></div>
+</div>
+
+<script>
+const ICONS={
+  doc:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/>',
+  board:'<rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="11" rx="1"/>',
+  note:'<path d="M4 4h16v11l-5 5H4z"/><path d="M15 20v-4a1 1 0 0 1 1-1h4"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/>',
+  comment:'<path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/>',
+};
+const ic=(k,s)=>`<svg class="ic" style="${s||''}" viewBox="0 0 24 24" fill="none" stroke="currentColor">${ICONS[k]}</svg>`;
+const av=d=>`<span class="av" style="background:${d.acolor}22;color:${d.acolor}">${d.author[0]}</span>`;
+
+const SAMPLE=[
+  {title:'手搭产品基座 · 设计规范 V2',desc:'统一组件库、栅格与色彩 token,沉淀可复用的设计基座。',project:'首页 Redesign',pcolor:'#7c6cf6',type:'note',typeLabel:'笔记',author:'陈一鸣',acolor:'#7c6cf6',edited:'2 小时前',comments:8},
+  {title:'2026 Q2 产品路线图',desc:'季度目标拆解、关键里程碑与跨团队依赖梳理。',project:'Q2 规划',pcolor:'#3b82f6',type:'board',typeLabel:'看板',author:'李航',acolor:'#3b82f6',edited:'今天 10:30',comments:24},
+  {title:'API 接口文档 · 订单域',desc:'订单中心对外接口定义、字段说明与示例。',project:'前端基建',pcolor:'#0ea5a4',type:'doc',typeLabel:'文档',author:'吴昊',acolor:'#0ea5a4',edited:'今天 09:40',comments:3},
+];
+
+const R={
+  s1:d=>`<div class="card">
+    <div class="r1"><span class="pri" style="background:${d.pcolor}"></span><h3>${d.title}</h3></div>
+    <p class="clamp1">${d.desc}</p>
+    <div class="foot"><span class="proj"><i class="pdot" style="background:${d.pcolor}"></i>${d.project}</span><span class="r">${d.typeLabel} · ${d.edited}</span></div>
+  </div>`,
+  s2:d=>`<div class="card">
+    <div class="top"><span class="picon">${ic(d.type)}</span><div><h3>${d.title}</h3><p class="clamp2">${d.desc}</p></div></div>
+    <div class="div"></div>
+    <div class="foot">${av(d)}<span>${d.author}</span><span class="r">${ic('clock')}${d.edited}</span></div>
+  </div>`,
+  s3:d=>`<div class="card" style="--acc:${d.pcolor}"><div class="inner">
+    <h3>${d.title}</h3><p class="clamp2">${d.desc}</p>
+    <div class="foot"><span class="tag">${d.typeLabel}</span><span>${d.project}</span><span class="r">${d.edited}</span></div>
+  </div></div>`,
+  s4:d=>`<div class="card" style="--acc:${d.pcolor}">
+    <div class="top"><span class="tchip" style="background:${d.pcolor}1f;color:${d.pcolor}">${ic(d.type)}${d.typeLabel}</span></div>
+    <h3>${d.title}</h3><p class="clamp2">${d.desc}</p>
+    <div class="foot">${av(d)}<span>${d.author}</span><span class="r">${ic('clock')}${d.edited}</span></div>
+  </div>`,
+  s5:d=>`<div class="card" style="--acc:${d.pcolor}">
+    <span class="ico">${ic(d.type,'width:20px;height:20px')}</span>
+    <h3>${d.title}</h3><p class="clamp2">${d.desc}</p>
+    <div class="chips"><span class="achip">${d.project}</span><span class="achip">${d.typeLabel}</span></div>
+  </div>`,
+  s6:d=>{const ms=[d.author,'王敏','赵磊'];return `<div class="card" style="--acc:${d.pcolor}">
+    <div class="bar"></div><div class="inner">
+      <h3>${d.title}</h3><p class="clamp2">${d.desc}</p>
+      <div class="avs">${ms.map(m=>`<span class="av" style="background:${d.pcolor}22;color:${d.pcolor}">${m[0]}</span>`).join('')}<span class="r">${d.edited}</span></div>
+    </div></div>`},
+  s7:d=>`<div class="row">
+    <span class="rico">${ic(d.type)}</span>
+    <div style="flex:1;min-width:0">
+      <h3>${d.title}</h3><p class="clamp1" style="margin-top:4px">${d.desc}</p>
+      <div class="meta"><span class="lang"><i class="langdot" style="background:${d.pcolor}"></i>${d.project}</span><span>更新于 ${d.edited}</span><span style="display:flex;align-items:center;gap:4px">${ic('comment')}${d.comments}</span></div>
+    </div></div>`,
+  s8:d=>`<div class="card" style="--acc:${d.pcolor}">
+    <span class="ico">${ic(d.type,'width:18px;height:18px')}</span>
+    <h3>${d.title}</h3><p class="clamp2">${d.desc}</p>
+    <div class="foot"><span class="proj"><i class="pdot" style="background:${d.pcolor}"></i>${d.project}</span><span class="r">${d.edited}</span></div>
+  </div>`,
+  s9:d=>`<div class="card">
+    <span class="pill">${d.typeLabel}</span>
+    <h3 style="margin-top:11px">${d.title}</h3><p class="clamp2">${d.desc}</p>
+    <div class="foot"><span class="av" style="background:rgba(255,255,255,.25);color:#fff">${d.author[0]}</span><span>${d.author}</span><span class="r">${d.edited}</span></div>
+  </div>`,
+  s10:d=>`<div class="card" style="--acc:${d.pcolor}">
+    <div class="cover"><span class="tag">${d.typeLabel}</span></div>
+    <div class="inner"><h3>${d.title}</h3>
+      <div class="byline">${av(d)}<span>${d.author}</span><span>·</span><span>${d.edited}</span><span class="r">5 分钟阅读</span></div>
+    </div></div>`,
+};
+Object.keys(R).forEach(k=>document.getElementById(k).innerHTML=SAMPLE.map(R[k]).join(''));
+document.body.classList.toggle('dark', matchMedia('(prefers-color-scheme: dark)').matches);
+</script>
+</body>
+</html>

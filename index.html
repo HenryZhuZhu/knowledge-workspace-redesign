@@ -182,6 +182,14 @@
   .docs.list .doc-cover { width:116px; height:auto; flex:none; }
   .docs.list .doc-desc { -webkit-line-clamp:1; line-clamp:1; }
   .sec-pinned .doc { border-color:var(--brand-100); }
+  /* —— 去 emoji 后的图标 / 色点 / 字母组合 —— */
+  .doc-crumb .pdot { width:7px; height:7px; border-radius:50%; display:inline-block; flex:none; margin-right:1px; }
+  .doc-crumb b { display:inline-flex; align-items:center; gap:5px; }
+  .proj-ico { font-weight:700; }
+  .schip { display:inline-flex; align-items:center; gap:6px; }
+  .sdot { width:6px; height:6px; border-radius:50%; display:inline-block; flex:none; }
+  .tico { display:inline-flex; align-items:center; color:var(--text-mute); }
+  .tree-row.active .tico { color:var(--brand-500); }
 
   .empty { text-align:center; padding:48px 0; color:var(--text-mute); }
   .empty .glyph { font-size:38px; opacity:.5; }
@@ -290,7 +298,7 @@
       <section class="page active" id="page-home">
         <div class="hello">
           <div>
-            <h1>下午好,陈一鸣 👋</h1>
+            <h1>下午好,陈一鸣</h1>
             <p>你参与 <b>6</b> 个项目 · 接着上次的进度 · <b>3</b> 个待办即将到期</p>
           </div>
           <div class="stat-row">
@@ -301,12 +309,12 @@
         </div>
 
         <section class="sec sec-pinned" id="sec-pinned" style="display:none">
-          <div class="sec-head"><h2>📌 置顶 · 常用</h2><span class="count" id="pin-count"></span></div>
+          <div class="sec-head"><h2>置顶 · 常用</h2><span class="count" id="pin-count"></span></div>
           <div class="docs grid" id="pinned"></div>
         </section>
 
         <section class="sec">
-          <div class="sec-head"><h2>📂 我的项目</h2><span class="count" id="proj-count"></span><span class="more" onclick="go('projects')">管理全部项目 →</span></div>
+          <div class="sec-head"><h2>我的项目</h2><span class="count" id="proj-count"></span><span class="more" onclick="go('projects')">管理全部项目 →</span></div>
           <div class="projs" id="proj-home"></div>
         </section>
 
@@ -324,7 +332,7 @@
           <div class="sec-head" style="margin-bottom:13px"><h2 id="list-title" style="font-size:var(--fs-base)">最近访问</h2><span class="count" id="list-count"></span></div>
           <div class="chips" id="chips" style="margin-bottom:16px"></div>
           <div class="docs grid" id="docs"></div>
-          <div class="empty" id="empty" style="display:none"><div class="glyph">🔍</div><p>该项目下暂无匹配文档,换个项目或关键词</p></div>
+          <div class="empty" id="empty" style="display:none"><div class="glyph"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></div><p>该项目下暂无匹配文档,换个项目或关键词</p></div>
         </section>
       </section>
 
@@ -352,7 +360,7 @@
           <div class="detail-notes">
             <div class="detail-notes-head"><h2 id="detail-dir-title">全部笔记</h2><span class="count" id="detail-dir-count"></span></div>
             <div class="docs grid" id="detail-docs"></div>
-            <div class="empty" id="detail-empty" style="display:none"><div class="glyph">📭</div><p>该目录下暂无笔记</p></div>
+            <div class="empty" id="detail-empty" style="display:none"><div class="glyph"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12h5l2 3h4l2-3h5"/><path d="M5 6h14l2 6v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-6z"/></svg></div><p>该目录下暂无笔记</p></div>
           </div>
         </div>
       </section>
@@ -361,7 +369,7 @@
       <section class="page" id="page-discover">
         <div class="page-head"><h1>发现</h1><p>你还没打开过、但可能想看的内容 · 按主题浏览</p></div>
         <div class="chips" id="topic-chips" style="margin-bottom:18px">
-          <button class="chip active">🔥 为你推荐</button>
+          <button class="chip active">为你推荐</button>
           <button class="chip">产品</button><button class="chip">设计</button>
           <button class="chip">研发</button><button class="chip">运营</button>
         </div>
@@ -386,7 +394,20 @@
 
 <script>
 /* ============================ 数据 ============================ */
-const COVERS = [ ['#4f5fd0','📄'],['#2f9e6e','📊'],['#bf841e','🗂️'],['#d2655f','📌'],['#8b5cf6','🎨'],['#0e9bb5','🧩'] ];
+const COVERS = ['#4f5fd0','#2f9e6e','#bf841e','#d2655f','#8b5cf6','#0e9bb5'];
+// 线性图标(替代 emoji)
+const ICN = {
+  note:'<path d="M4 4h16v11l-5 5H4z"/><path d="M15 20v-4a1 1 0 0 1 1-1h4"/>',
+  doc:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/>',
+  board:'<rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="11" rx="1"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/>',
+  comment:'<path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/>',
+  folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',
+  bookmark:'<path d="M6 3h12v18l-6-4-6 4z"/>',
+};
+const typeIcon = {'笔记':'note','文档':'doc','看板':'board'};
+const svg = (k,sz)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:${sz||14}px;height:${sz||14}px;stroke-width:1.7;flex:none">${ICN[k]}</svg>`;
 const PROJECTS = [
   {id:'p1', name:'首页 Redesign', emoji:'🎨', col:'#8b5cf6', desc:'知识工作台首页重设计', notes:8, dirs:['设计稿','走查记录','用户调研'], members:['陈','李','周'], updated:'今天', pct:65},
   {id:'p2', name:'2026 Q2 规划', emoji:'🎯', col:'#4f5fd0', desc:'季度目标、路线图与对齐', notes:6, dirs:['路线图','OKR','评审'], members:['李','陈'], updated:'今天', pct:40},
@@ -423,12 +444,13 @@ const TREE = {
 
 /* —— 任务/告警：通过 API 开放给各应用 —— 以「来源应用」分类 + 按状态/严重度分组 —— */
 const SOURCES = {
-  proj:   {name:'项目管理', icon:'📋'},
-  ci:     {name:'CI/CD',   icon:'⚙️'},
-  doc:    {name:'文档系统', icon:'📄'},
-  approve:{name:'审批流',   icon:'🔑'},
-  monitor:{name:'监控',     icon:'📡'},
+  proj:   {name:'项目管理', col:'#7c6cf6'},
+  ci:     {name:'CI/CD',   col:'#0ea5a4'},
+  doc:    {name:'文档系统', col:'#3b82f6'},
+  approve:{name:'审批流',   col:'#d97706'},
+  monitor:{name:'监控',     col:'#dc2626'},
 };
+const sdot = c=>`<i class="sdot" style="background:${c}"></i>`;
 const FEED = {
   task:[
     {s:'doing',sl:'进行中',src:'proj',   id:'#3052',t:'完成首页 Redesign 高保真稿并走查',who:'陈',due:'今天 18:00',soon:true},
@@ -460,28 +482,28 @@ let pinned = new Set(JSON.parse(localStorage.getItem('kw_pins')||'[]'));
 function docCard(d){
   const c = COVERS[d.ci], p = PMAP[d.project], on = pinned.has(d.id)?'on':'';
   return `<div class="doc" onclick="openDoc('${d.id}')">
-    <div class="doc-cover" style="background:${c[0]}1a">
-      <span class="glyph" style="color:${c[0]}">${c[1]}</span>
+    <div class="doc-cover" style="background:${c}1a">
+      <span class="glyph" style="color:${c}">${svg(typeIcon[d.type]||'doc',24)}</span>
       <span class="doc-type">${d.type}</span>
-      <button class="pin ${on}" title="置顶常用" onclick="togglePin('${d.id}',event)">📌</button>
+      <button class="pin ${on}" title="置顶常用" onclick="togglePin('${d.id}',event)">${svg('bookmark',14)}</button>
     </div>
     <div class="doc-body">
-      <div class="doc-crumb" title="${p.name} / ${d.path.join(' / ')}"><b>${p.emoji} ${p.name}</b> › ${d.path.join(' › ')}</div>
+      <div class="doc-crumb" title="${p.name} / ${d.path.join(' / ')}"><b><i class="pdot" style="background:${p.col}"></i>${p.name}</b> › ${d.path.join(' › ')}</div>
       <div class="doc-title">${d.t}</div>
       <div class="doc-desc">${d.d}</div>
       <div class="doc-meta">
         <span class="who"><span class="avatar">${d.c}</span>${d.who}</span>
-        <span class="m-r"><span>🕑 ${d.edited}</span><span>💬 ${d.m}</span></span>
+        <span class="m-r"><span>${svg('clock',12)}${d.edited}</span><span>${svg('comment',12)}${d.m}</span></span>
       </div>
     </div></div>`;
 }
 function projectCard(p){
   return `<div class="proj" onclick="openProject('${p.id}')">
     <div class="proj-top">
-      <div class="proj-ico" style="background:${p.col}22;color:${p.col}">${p.emoji}</div>
+      <div class="proj-ico" style="background:${p.col}22;color:${p.col}">${p.name[0]}</div>
       <div><b>${p.name}</b><small>${p.notes} 篇笔记 · ${p.dirs.length} 个目录</small></div>
     </div>
-    <div class="proj-dirs">${p.dirs.map(d=>`<span class="dir-chip">📁 ${d}</span>`).join('')}</div>
+    <div class="proj-dirs">${p.dirs.map(d=>`<span class="dir-chip">${svg('folder',12)}${d}</span>`).join('')}</div>
     <div class="proj-bar"><i style="width:${p.pct}%;background:${p.col}"></i></div>
     <div class="proj-foot">
       <div class="members">${p.members.map(m=>`<span class="avatar">${m}</span>`).join('')}</div>
@@ -508,7 +530,7 @@ function renderProjects(){
 }
 function renderChips(){
   const chips = ['<button class="chip active" data-proj="all" onclick="filterProject(\'all\',this)">全部项目</button>']
-    .concat(PROJECTS.map(p=>`<button class="chip" data-proj="${p.id}" onclick="filterProject('${p.id}',this)">${p.emoji} ${p.name}</button>`));
+    .concat(PROJECTS.map(p=>`<button class="chip" data-proj="${p.id}" onclick="filterProject('${p.id}',this)">${sdot(p.col)}${p.name}</button>`));
   document.getElementById('chips').innerHTML = chips.join('');
 }
 function renderDiscover(){
@@ -527,7 +549,7 @@ function openProject(id){
 }
 function renderDetail(){
   const p=PMAP[curProj], ico=document.getElementById('d-ico');
-  ico.style.background=p.col+'22'; ico.style.color=p.col; ico.textContent=p.emoji;
+  ico.style.background=p.col+'22'; ico.style.color=p.col; ico.style.fontWeight=700; ico.textContent=p.name[0];
   document.getElementById('d-name').textContent=p.name;
   document.getElementById('d-meta').textContent=`${countNotes(curProj,[])} 篇笔记 · ${p.dirs.length} 个目录 · ${p.members.length} 名成员`;
   renderTree(); renderDetailNotes();
@@ -539,7 +561,7 @@ function treeRows(nodes, parent, depth){
     const active = curDir && curDir.join(SEP)===key ? 'active':'';
     html+=`<div class="tree-row ${active}" style="padding-left:${8+depth*15}px" onclick="selectDir('${key}')">
       <span class="caret ${hasC?(open?'open':''):'blank'}" ${hasC?`onclick="toggleDir('${key}',event)"`:''}>▶</span>
-      <span>${hasC?(open?'📂':'📁'):'📄'}</span>
+      <span class="tico">${hasC?svg('folder',15):svg('file',15)}</span>
       <span class="tname">${n.n}</span>
       <span class="tcnt">${countNotes(curProj,path)}</span>
     </div>`;
@@ -550,7 +572,7 @@ function treeRows(nodes, parent, depth){
 function renderTree(){
   const root = !curDir ? 'active':'';
   let html=`<div class="tree-row ${root}" style="padding-left:8px" onclick="selectDir('')">
-    <span class="caret blank">▶</span><span>🗂️</span><span class="tname">全部笔记</span><span class="tcnt">${countNotes(curProj,[])}</span></div>`;
+    <span class="caret blank">▶</span><span class="tico">${svg('folder',15)}</span><span class="tname">全部笔记</span><span class="tcnt">${countNotes(curProj,[])}</span></div>`;
   document.getElementById('detail-tree').innerHTML = html + treeRows(TREE[curProj]||[], [], 0);
 }
 function renderDetailNotes(){
@@ -574,11 +596,11 @@ function itemCard(i){
   return `<div class="task">
     <div class="task-top">
       <span class="badge-status ${cls}"><span class="dot"></span>${label}</span>
-      <span class="src-badge">${s.icon} ${s.name}</span>
+      <span class="src-badge">${sdot(s.col)}${s.name}</span>
       <span class="task-id">${i.id}</span>
     </div>
     <div class="task-title">${i.t}</div>
-    <div class="task-foot"><span class="avatar">${i.who}</span>${isTask?'负责人':'相关人'}<span class="due ${i.soon?'soon':''}">🕑 ${i.due}</span></div>
+    <div class="task-foot"><span class="avatar">${i.who}</span>${isTask?'负责人':'相关人'}<span class="due ${i.soon?'soon':''}">${svg('clock',12)}${i.due}</span></div>
   </div>`;
 }
 function renderRightFilter(){
@@ -586,7 +608,7 @@ function renderRightFilter(){
   const srcs = [...new Set(items.map(i=>i.src))];
   const chips = [`<button class="schip ${curSrc==='all'?'active':''}" onclick="filterSrc('all')">全部来源 ${items.length}</button>`]
     .concat(srcs.map(s=>{ const n=items.filter(i=>i.src===s).length;
-      return `<button class="schip ${curSrc===s?'active':''}" onclick="filterSrc('${s}')">${SOURCES[s].icon} ${SOURCES[s].name} ${n}</button>`; }));
+      return `<button class="schip ${curSrc===s?'active':''}" onclick="filterSrc('${s}')">${sdot(SOURCES[s].col)}${SOURCES[s].name} ${n}</button>`; }));
   document.getElementById('right-filter').innerHTML = chips.join('');
 }
 function renderRight(){
@@ -597,7 +619,7 @@ function renderRight(){
     if(!gi.length) return;
     html += `<div class="grp-head"><span>${g.label}</span><i>${gi.length}</i></div>` + gi.map(itemCard).join('');
   });
-  document.getElementById('right-list').innerHTML = html || `<div class="empty"><div class="glyph">✓</div><p>该来源暂无内容</p></div>`;
+  document.getElementById('right-list').innerHTML = html || `<div class="empty"><div class="glyph"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg></div><p>该来源暂无内容</p></div>`;
 }
 function switchRight(el,k){ document.querySelectorAll('.right-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); curRight=k; curSrc='all'; renderRightFilter(); renderRight(); }
 function filterSrc(s){ curSrc=s; renderRightFilter(); renderRight(); }
