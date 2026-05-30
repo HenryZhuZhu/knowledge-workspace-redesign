@@ -24,7 +24,7 @@ The file has three layers, in order:
 
 1. **Design tokens** — the `:root` CSS variable block is the single source of truth: one brand color ramp + neutral gray ramp + semantic colors (used *only* for status). Type scale, radii, shadows, spacing, and layout widths are all tokens. `body.dark` overrides tokens for the dark theme. When changing visuals, edit tokens rather than hardcoding values.
 2. **Layout** — a 3-column CSS grid (`.app`): left nav / main / right panel. Collapsing nav or hiding the right panel is done by toggling classes on `.app` that swap the `grid-template-columns` (see `--nav-w`, `--nav-w-collapsed`, `--right-w`).
-3. **Data + render + interaction** — in the `<script>`: `PROJECTS`, `DOCS`, `TASKS` are plain-array mock data; pure render helpers (`docCard`, `projectCard`, `renderProjects`, `renderPinned`, `renderChips`, `renderDiscover`, `renderTasks`) build HTML strings; interaction handlers re-render on state change. State is a few module-level globals (`curTab`, `curProject`, `curSearch`, `pinned`).
+3. **Data + render + interaction** — in the `<script>`: `PROJECTS`, `DOCS`, and `FEED`/`SOURCES`/`GROUPS` (right-panel tasks & alerts) are plain-array/object mock data; pure render helpers (`docCard`, `projectCard`, `renderProjects`, `renderPinned`, `renderChips`, `renderDiscover`, `itemCard`, `renderRight`, `renderRightFilter`) build HTML strings; interaction handlers re-render on state change. State is a few module-level globals (`curTab`, `curProject`, `curSearch`, `pinned`, `curRight`, `curSrc`).
 
 The main area is a lightweight multi-page SPA: three `.page` sections (`#page-home`, `#page-projects`, `#page-discover`) toggled by `go(page)`, wired from `.nav-item[data-page]`. Nav items without `data-page` call `notImpl()` (placeholder toast).
 
@@ -33,7 +33,9 @@ The main area is a lightweight multi-page SPA: three `.page` sections (`#page-ho
 - **Projects are the organizing unit.** Notes (`DOCS`) belong to a `project` (id into `PROJECTS`) and a `dir` (subdirectory within that project); cards show a `项目 › 目录` breadcrumb, and the home doc list filters by project (`curProject`, chips from `renderChips`).
 - **Data-driven cards.** To add/change content, edit `PROJECTS` / `DOCS` / `TASKS`. Each doc carries `mine` / `edited` / `ts` (edit-sort weight) / `acc` (access-sort weight; >0 means "I've opened it") / `ci` (cover-color index into `COVERS`). The edit-vs-access split is load-bearing (see Design intent). Render functions derive everything from these fields; don't hand-write card markup.
 - **Tabs are declarative.** `TAB_META` maps each tab to its title/sub + a `base()` filter/sort. Adding a tab = one entry in `TAB_META` + one `.tab` button with a matching `data-tab`.
-- **Persistence is localStorage**, keyed `kw_*` (`kw_tab` = last active tab, `kw_pins` = pinned doc ids). The default tab is "最近编辑" (recent edits), restored from `kw_tab` on load.
+- **Right panel = multi-source feed.** Tasks/alerts arrive from many apps (opened via API), so every item has a `src` (key into `SOURCES`). The panel filters by source (`curSrc`, chips) and groups by status (tasks) / severity (alerts) via `GROUPS` + `groupKey`. To add a source, add to `SOURCES` and tag items; rendering auto-classifies.
+- **Theming.** Light/Dark are full token overrides (`body.dark`). Covers/badges must use tokens (e.g. `var(--surface)`, `accent+'1a'` tints) — never hardcoded white/black — so both themes work. Theme is persisted (`kw_theme`) and defaults to the OS `prefers-color-scheme` on first load.
+- **Persistence is localStorage**, keyed `kw_*` (`kw_tab` = last active tab, `kw_pins` = pinned doc ids, `kw_theme` = light/dark). The default doc tab is "最近访问" (access-sorted), restored from `kw_tab` on load.
 - Semantic colors (`--success/warning/danger/info`) are reserved for status badges; the brand color is for actions/identity. Don't use semantic colors decoratively.
 
 ## Design intent (drives changes — read before redesigning)
