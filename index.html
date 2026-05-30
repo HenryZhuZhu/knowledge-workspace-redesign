@@ -118,14 +118,6 @@
   .stat b { font-size:var(--fs-lg); font-weight:700; }
   .stat span { display:block; font-size:var(--fs-xs); color:var(--text-mute); }
 
-  /* ① 紧凑快捷入口条 */
-  .quick { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:26px; }
-  .quick-card { display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md); padding:13px 15px; transition:.18s; cursor:pointer; }
-  .quick-card:hover { border-color:var(--brand-300); box-shadow:var(--shadow-sm); transform:translateY(-2px); }
-  .q-ico { width:38px; height:38px; border-radius:10px; display:grid; place-items:center; color:#fff; flex:none; }
-  .quick-card b { font-size:var(--fs-base); font-weight:600; display:block; }
-  .quick-card small { font-size:var(--fs-xs); color:var(--text-mute); }
-
   /* 内容区工具条 */
   .toolbar { display:flex; align-items:center; gap:14px; margin-bottom:16px; flex-wrap:wrap; }
   .tabs { display:flex; gap:4px; background:var(--gray-100); padding:4px; border-radius:var(--r-md); }
@@ -222,7 +214,7 @@
   .float-tip { position:fixed; bottom:18px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--gray-900); color:#fff; font-size:var(--fs-sm); padding:9px 16px; border-radius:99px; box-shadow:var(--shadow-md); opacity:0; pointer-events:none; transition:.25s; z-index:50; }
   .float-tip.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-  @media (max-width:1100px){ .app,.app.nav-collapsed{ grid-template-columns:var(--nav-w-collapsed) 1fr 0; } .quick{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:1100px){ .app,.app.nav-collapsed{ grid-template-columns:var(--nav-w-collapsed) 1fr 0; } }
 </style>
 </head>
 <body>
@@ -287,22 +279,16 @@
       <div class="hello">
         <div>
           <h1>下午好,陈一鸣 <span class="wave">👋</span></h1>
-          <p>你最近编辑了 <b>4</b> 篇文档 · 置顶常用随时可达 · <b>3</b> 个待办即将到期</p>
+          <p>接着上次的进度 · <b>2</b> 篇分享给你待读 · <b>3</b> 个待办即将到期</p>
         </div>
         <div class="stat-row">
           <div class="stat"><b>128</b><span>我的文档</span></div>
-          <div class="stat"><b>7</b><span>进行中项目</span></div>
-          <div class="stat"><b>24</b><span>本周协作</span></div>
+          <div class="stat"><b>2</b><span>分享给我</span></div>
+          <div class="stat"><b>3</b><span>待办到期</span></div>
         </div>
       </div>
 
-      <!-- ① 紧凑快捷入口条 -->
-      <div class="quick">
-        <div class="quick-card"><div class="q-ico" style="background:linear-gradient(135deg,#f43f5e,#e11d48)">★</div><div><b>Skills 中心</b><small>能力沉淀与复用</small></div></div>
-        <div class="quick-card"><div class="q-ico" style="background:linear-gradient(135deg,#3b6cf6,#264bb5)">▤</div><div><b>项目中心</b><small>7 个进行中</small></div></div>
-        <div class="quick-card"><div class="q-ico" style="background:linear-gradient(135deg,#f59e0b,#d97706)">⊞</div><div><b>应用中心</b><small>32 个已接入</small></div></div>
-        <div class="quick-card"><div class="q-ico" style="background:linear-gradient(135deg,#10b981,#059669)">▦</div><div><b>知识库</b><small>5 个空间</small></div></div>
-      </div>
+      <!-- v3：删除与左侧导航重复的功能入口卡，首屏让位给“我的工作”内容 -->
 
       <!-- 继续编辑（接着上次干活） -->
       <section class="sec" id="sec-resume">
@@ -316,9 +302,10 @@
       <!-- 工具条：Tab 重排（推荐降到最后） -->
       <div class="toolbar">
         <div class="tabs">
-          <button class="tab active" data-tab="recent" onclick="switchTab(this)">最近编辑</button>
+          <button class="tab active" data-tab="access" onclick="switchTab(this)">最近访问</button>
           <button class="tab" data-tab="mine" onclick="switchTab(this)">我创建的</button>
-          <button class="tab" data-tab="fav" onclick="switchTab(this)">我收藏的</button>
+          <button class="tab" data-tab="fav" onclick="switchTab(this)">收藏</button>
+          <button class="tab" data-tab="shared" onclick="switchTab(this)">分享给我</button>
           <button class="tab" data-tab="reco" onclick="switchTab(this)">推荐</button>
         </div>
         <div class="chips" id="chips">
@@ -373,18 +360,23 @@ const COVERS = [
   ['#eef4ff','#3b6cf6','📄'],['#e7f6ec','#16a34a','📊'],['#fdf0e3','#d97706','🗂️'],
   ['#fdeaea','#dc2626','📌'],['#f3eaff','#7c3aed','🎨'],['#e6f7fb','#0891b2','🧩']
 ];
-// mine=我创建的, fav=我收藏的, edited=上次编辑, ts=排序权重(越大越新), ci=封面色
+// 关键区分：编辑维度 vs 访问维度
+//  mine=我创建的, ts=我最近“编辑”的权重(仅我编辑过的有), edited=上次编辑文案
+//  acc=我最近“访问/打开”的权重(只要我打开过就有,含只读浏览), accessed=上次打开文案
+//  fav=收藏, shared=别人分享给我的, ci=封面色
 const DOCS = [
-  {id:'d1', t:'手搭产品基座 · 设计规范 V2',d:'统一组件库、栅格与色彩 token,沉淀可复用的设计基座。',tag:'设计',who:'陈一鸣',c:'陈',type:'笔记',m:8, mine:true, fav:true, edited:'2 小时前', ts:100, ci:4},
-  {id:'d2', t:'API 接口文档 · 订单域',d:'订单中心对外接口定义、字段说明与示例。',tag:'研发',who:'吴昊',c:'吴',type:'文档',m:3, mine:false,fav:false,edited:'今天 09:12', ts:96, ci:5},
-  {id:'d3', t:'2026 Q2 产品路线图',d:'季度目标拆解、关键里程碑与跨团队依赖梳理。',tag:'产品',who:'李航',c:'李',type:'看板',m:24,mine:false,fav:true, edited:'今天 10:30', ts:95, ci:1},
-  {id:'d4', t:'首页 Redesign 走查记录',d:'高保真稿评审问题清单与处理状态跟踪。',tag:'设计',who:'陈一鸣',c:'陈',type:'文档',m:5, mine:true, fav:false,edited:'昨天 19:40', ts:90, ci:0},
-  {id:'d5', t:'前端工程化最佳实践',d:'构建、规范、CI/CD 与性能优化的团队约定。',tag:'研发',who:'赵磊',c:'赵',type:'笔记',m:12,mine:false,fav:false,edited:'2 天前', ts:80, ci:5},
-  {id:'d6', t:'用户访谈纪要 · 4 月批次',d:'12 位目标用户深访结论,核心痛点与机会点汇总。',tag:'产品',who:'陈一鸣',c:'陈',type:'文档',m:6, mine:true, fav:false,edited:'3 天前', ts:70, ci:1},
-  {id:'d7', t:'品牌视觉升级提案',d:'新 Logo、主色与插画系统的方向探索与对比。',tag:'设计',who:'周琳',c:'周',type:'看板',m:9, mine:false,fav:true, edited:'4 天前', ts:60, ci:4},
-  {id:'d8', t:'组件库使用手册',d:'常用组件 API、用法示例与设计走查清单。',tag:'设计',who:'陈一鸣',c:'陈',type:'笔记',m:2, mine:true, fav:false,edited:'5 天前', ts:55, ci:0},
-  {id:'d9', t:'增长实验复盘 #127',d:'本期 A/B 实验设计、数据表现与下一步策略。',tag:'运营',who:'孙婷',c:'孙',type:'文档',m:4, mine:false,fav:false,edited:'上周', ts:50, ci:2},
-  {id:'d10',t:'稿件库 1000 篇精选',d:'高质量内容沉淀,按主题分类的可复用素材。',tag:'运营',who:'郑爽',c:'郑',type:'笔记',m:0, mine:false,fav:false,edited:'上周', ts:45, ci:3},
+  {id:'d1', t:'手搭产品基座 · 设计规范 V2',d:'统一组件库、栅格与色彩 token,沉淀可复用的设计基座。',tag:'设计',who:'陈一鸣',c:'陈',type:'笔记',m:8, mine:true, fav:true, shared:false, edited:'2 小时前', ts:100, accessed:'2 小时前', acc:100, ci:4},
+  {id:'d2', t:'API 接口文档 · 订单域',d:'订单中心对外接口定义、字段说明与示例。',tag:'研发',who:'吴昊',c:'吴',type:'文档',m:3, mine:false,fav:false,shared:true, edited:'今天 09:12', ts:0, accessed:'今天 09:40', acc:98, ci:5},
+  {id:'d3', t:'2026 Q2 产品路线图',d:'季度目标拆解、关键里程碑与跨团队依赖梳理。',tag:'产品',who:'李航',c:'李',type:'看板',m:24,mine:false,fav:true, shared:false, edited:'今天 10:30', ts:0, accessed:'今天 11:05', acc:99, ci:1},
+  {id:'d4', t:'首页 Redesign 走查记录',d:'高保真稿评审问题清单与处理状态跟踪。',tag:'设计',who:'陈一鸣',c:'陈',type:'文档',m:5, mine:true, fav:false,shared:false, edited:'昨天 19:40', ts:90, accessed:'今天 08:30', acc:96, ci:0},
+  {id:'d5', t:'前端工程化最佳实践',d:'构建、规范、CI/CD 与性能优化的团队约定。',tag:'研发',who:'赵磊',c:'赵',type:'笔记',m:12,mine:false,fav:false,shared:false, edited:'2 天前', ts:0, accessed:'昨天 16:20', acc:80, ci:5},
+  {id:'d6', t:'用户访谈纪要 · 4 月批次',d:'12 位目标用户深访结论,核心痛点与机会点汇总。',tag:'产品',who:'陈一鸣',c:'陈',type:'文档',m:6, mine:true, fav:false,shared:false, edited:'3 天前', ts:70, accessed:'3 天前', acc:70, ci:1},
+  {id:'d7', t:'品牌视觉升级提案',d:'新 Logo、主色与插画系统的方向探索与对比。',tag:'设计',who:'周琳',c:'周',type:'看板',m:9, mine:false,fav:true, shared:true, edited:'4 天前', ts:0, accessed:'4 天前', acc:60, ci:4},
+  {id:'d8', t:'组件库使用手册',d:'常用组件 API、用法示例与设计走查清单。',tag:'设计',who:'陈一鸣',c:'陈',type:'笔记',m:2, mine:true, fav:false,shared:false, edited:'5 天前', ts:55, accessed:'5 天前', acc:55, ci:0},
+  {id:'d9', t:'增长实验复盘 #127',d:'本期 A/B 实验设计、数据表现与下一步策略。',tag:'运营',who:'孙婷',c:'孙',type:'文档',m:4, mine:false,fav:false,shared:true, edited:'昨天', ts:0, accessed:'昨天 14:10', acc:78, ci:2},
+  {id:'d10',t:'稿件库 1000 篇精选',d:'高质量内容沉淀,按主题分类的可复用素材。',tag:'运营',who:'郑爽',c:'郑',type:'笔记',m:0, mine:false,fav:false,shared:false, edited:'上周', ts:0, accessed:'', acc:0, ci:3},
+  {id:'d11',t:'竞品分析 · 协作工具横评',d:'主流协作/知识工具的功能、定价与差异化对比。',tag:'产品',who:'林夕',c:'林',type:'文档',m:7, mine:false,fav:false,shared:false, edited:'2 天前', ts:0, accessed:'', acc:0, ci:1},
+  {id:'d12',t:'OKR 撰写与对齐指南',d:'目标设定方法、示例库与季度对齐流程。',tag:'运营',who:'何川',c:'何',type:'笔记',m:3, mine:false,fav:false,shared:false, edited:'3 天前', ts:0, accessed:'', acc:0, ci:2},
 ];
 const TASKS = {
   task:[
@@ -472,18 +464,20 @@ function renderTasks(key){
     </div>`).join('');
 }
 /* ============================ 交互 ============================ */
-let curTab='recent', curTag='全部', curSearch='';
+let curTab='access', curTag='全部', curSearch='';
 const TAB_META = {
-  recent:{title:'最近编辑', base:()=>[...DOCS].sort((a,b)=>b.ts-a.ts)},
-  mine:  {title:'我创建的', base:()=>DOCS.filter(d=>d.mine).sort((a,b)=>b.ts-a.ts)},
-  fav:   {title:'我收藏的', base:()=>DOCS.filter(d=>d.fav).sort((a,b)=>b.ts-a.ts)},
-  reco:  {title:'推荐内容', base:()=>DOCS.filter(d=>!d.mine)},
+  // 最近访问 = 我打开过的一切(编辑+浏览),按访问时间排 —— 与“继续编辑(我编辑的)”语义不同
+  access:{title:'最近访问', sub:'我打开过的全部(含只读浏览)', base:()=>DOCS.filter(d=>d.acc>0).sort((a,b)=>b.acc-a.acc)},
+  mine:  {title:'我创建的', sub:'我作为作者的文档',           base:()=>DOCS.filter(d=>d.mine).sort((a,b)=>b.ts-a.ts)},
+  fav:   {title:'收藏',     sub:'我标星的文档',               base:()=>DOCS.filter(d=>d.fav).sort((a,b)=>b.acc-a.acc)},
+  shared:{title:'分享给我', sub:'同事分享 / @我 的文档',       base:()=>DOCS.filter(d=>d.shared&&!d.mine).sort((a,b)=>b.acc-a.acc)},
+  reco:  {title:'推荐',     sub:'你可能想看,但还没打开过',     base:()=>DOCS.filter(d=>!d.mine&&!d.acc).sort((a,b)=>b.ts-a.ts)},
 };
 function apply(){
   const list = TAB_META[curTab].base()
     .filter(d=>(curTag==='全部'||d.tag===curTag) && (d.t+d.d).toLowerCase().includes(curSearch));
   document.getElementById('list-title').textContent = TAB_META[curTab].title;
-  document.getElementById('list-count').textContent = `${list.length} 篇`;
+  document.getElementById('list-count').textContent = `${list.length} 篇 · ${TAB_META[curTab].sub}`;
   if(!list.length){ docsEl.innerHTML=''; document.getElementById('empty').style.display='block'; }
   else { document.getElementById('empty').style.display='none'; docsEl.innerHTML = list.map(docCard).join(''); }
 }
@@ -498,11 +492,12 @@ function switchTab(el){
 
 /* ============================ 初始化 ============================ */
 renderResume(); renderPinned(); renderTasks('task');
-// 恢复上次停留的 Tab（默认「最近编辑」，而非「推荐」）
+// 恢复上次停留的 Tab（默认「最近访问」，而非「推荐」；旧值失效时回落到默认）
 (function restoreTab(){
   const saved = localStorage.getItem('kw_tab');
-  const tabEl = document.querySelector(saved ? `.tab[data-tab="${saved}"]` : '.tab[data-tab="recent"]');
-  if(tabEl){ document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); tabEl.classList.add('active'); curTab=tabEl.dataset.tab; }
+  const tabEl = (saved && document.querySelector(`.tab[data-tab="${saved}"]`)) || document.querySelector('.tab[data-tab="access"]');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  tabEl.classList.add('active'); curTab=tabEl.dataset.tab;
   apply();
 })();
 function setView(v){ docsEl.className='docs '+v; document.getElementById('v-grid').classList.toggle('active',v==='grid'); document.getElementById('v-list').classList.toggle('active',v==='list'); }
